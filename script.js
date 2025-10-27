@@ -87,7 +87,7 @@ function setMode(mode){
     Reflex.loadHi(); Reflex.resetHUD();
   }else if(mode==='memory'){
     $('#game-memory').classList.remove('hidden'); title.textContent='Memória 3×4';
-    Memory.loadHi(); Memory.setup(); Memory.adjustSize(); // <- garante ajuste inicial
+    Memory.loadHi(); Memory.setup(); Memory.adjustSize(); // ajuste inicial
   }else if(mode==='slice'){
     $('#game-slice').classList.remove('hidden'); title.textContent='Fruit Slice';
     Slice.loadHi(); Slice.prepare();
@@ -125,7 +125,7 @@ $('#pick-reflex').addEventListener('click',()=>setMode('reflex'));
 $('#pick-memory').addEventListener('click',()=>setMode('memory'));
 $('#pick-slice').addEventListener('click',()=>setMode('slice'));
 
-/* ====================== TAP REFLEX (dinâmica com risco/recompensa) ====================== */
+/* ====================== TAP REFLEX ====================== */
 const Reflex = {
   roundTime: 30,
   score: 0, time: 0, hi: 0, level: 1, playing: false,
@@ -295,7 +295,7 @@ const Memory=(()=>{
     score=0; time=30; scoreEl.textContent=0; timeEl.textContent=time;
   }
 
-  // Ajuste de tamanho robusto (evita sobreposição)
+  // Ajuste de tamanho (50% do que caberia), sem sobrepor
   function adjustSize(){
     const stage = $('#stage');
     const pad = 24, gap = 24;
@@ -303,7 +303,8 @@ const Memory=(()=>{
     const h = stage.clientHeight - pad*2;
     const cardByW = (w - 2*gap) / 3;
     const cardByH = ((h - 3*gap) / 4) * 0.75; // 3:4
-    const card = Math.max(60, Math.floor(Math.min(cardByW, cardByH))); // limite mínimo
+    // metade do tamanho que caberia, com mínimo de 40px
+    const card = Math.max(40, Math.floor(Math.min(cardByW, cardByH) * 0.5));
     document.documentElement.style.setProperty('--card', card + 'px');
   }
 
@@ -343,7 +344,6 @@ const Memory=(()=>{
 
   function hardStop(){ playing=false; clearTimeout(timerTO); overlay.style.display='none'; }
 
-  // expõe funções
   return { setup, start, loadHi, hardStop, adjustSize };
 })();
 window.addEventListener('resize', ()=>{ if(S.mode==='memory') Memory.adjustSize(); });
@@ -407,7 +407,7 @@ const Slice = (()=>{
     ct.beginPath(); ct.arc(o.x,o.y,o.r*1.08,0,Math.PI*2); ct.fill();
     if(o.spr){ const s=o.r*2; ct.drawImage(o.spr,o.x-o.r,o.y-o.r,s,s); }
     else{ ct.fillStyle=o.color; ct.beginPath(); ct.arc(o.x,o.y,o.r,0,Math.PI*2); ct.fill();
-          ct.fillStyle=o.light; ct.beginPath(); ct.arc(o.x-o.r*0.3,o.y-o.r*0.3,o.r*0.38,0,Math.PI*2); ct.fill(); }
+          ct.fillStyle=o.light; ct.beginPath(); ct.arc(o.x-o.r*0.3,o.y-o.r*0.3,o.r*0.38, 0, Math.PI*2); ct.fill(); }
     if(o.bomb){ ct.fillStyle='#111'; ct.beginPath(); ct.arc(o.x,o.y,o.r*0.35,0,Math.PI*2); ct.fill(); }
   }
   function drawPart(p){ if(p.smoke){ const a=Math.max(0,Math.min(1,p.ttl/520)); ct.fillStyle=`rgba(80,80,80,${a})`; ct.beginPath(); ct.arc(p.x,p.y,p.s*1.2,0,Math.PI*2); ct.fill();
@@ -447,7 +447,7 @@ const Slice = (()=>{
   let pointerId=null, last=null, pmLast=null, lastProc=0;
   let timerTO=null;
 
-  function prepare(){ resize(); score=0; timer=ROUND_TIME; speed=1; scoreEl.textContent=0; timeEl.textContent=timer; overlay.innerHTML=''; overlay.style.background='transparent'; clearAll(); startBtn.disabled=false; startBtn.textContent='Iniciar'; }
+  function prepare(){ resize(); score=0; timer=30; speed=1; scoreEl.textContent=0; timeEl.textContent=timer; overlay.innerHTML=''; overlay.style.background='transparent'; clearAll(); startBtn.disabled=false; startBtn.textContent='Iniciar'; }
   function clearAll(){ cancelAnimationFrame(rafId); lastTs=0; acc=0; lastSpawn=0; pmLast=null; last=null; pointerId=null; ct.clearRect(0,0,cv.width,cv.height);
     for(const o of fruits) o.alive=false; for(const p of parts) p.alive=false; trailClear(); waves.length=0; shakeMs=0; }
 
@@ -524,4 +524,5 @@ startBtn.addEventListener('click', ()=>{
     tEl.style.background=`${g1}, ${g2}`; requestAnimationFrame(paint); }
   paint();
 })();
+
 
