@@ -3,95 +3,72 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-  <title>Arcade 3-em-1</title>
+  <title>Totem — 3 em 1 (Memória • Tap Reflex • Fruit Slice)</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <header class="topbar">
-    <h1 id="title">Arcade — Escolha um jogo</h1>
-    <div class="hud">
-      <span class="tag">Pontos: <b id="score">0</b></span>
-      <span class="tag">Tempo: <b id="time">30</b>s</span>
-      <span class="tag">Recorde: <b id="hi">0</b></span>
-      <button id="start" class="btn" disabled>Iniciar</button>
-      <span class="tag" id="who"><span id="whoName">—</span> · <span id="whoOrg">—</span></span>
-    </div>
-  </header>
-
-  <main id="stage">
-    <!-- Seletor -->
-    <section id="selector" class="center lobby">
-      <h2>Escolha um jogo</h2>
-      <p class="muted">Depois de logar, selecione abaixo:</p>
-      <div class="choices">
-        <button class="choice" id="pick-reflex">
-          <div class="choice-title">Tap Reflex</div>
-          <div class="choice-sub">Toque no alvo “GO!”. Agora com decoy e combo.</div>
-        </button>
-        <button class="choice" id="pick-memory">
-          <div class="choice-title">Memória 3×4</div>
-          <div class="choice-sub">Encontre os pares em 30 segundos.</div>
-        </button>
-        <button class="choice" id="pick-slice">
-          <div class="choice-title">Fruit Slice</div>
-          <div class="choice-sub">Corte frutas, desvie das bombas.</div>
-        </button>
-      </div>
-    </section>
-
-    <!-- Mensagens -->
-    <div id="msg" class="center" style="display:none"></div>
-
-    <!-- Tap Reflex -->
-    <section id="game-reflex" class="game hidden" aria-label="Tap Reflex">
-      <div id="target" class="pulse">GO!</div>
-    </section>
-
-    <!-- Memória 3×4 -->
-    <section id="game-memory" class="game hidden" aria-label="Memória 3x4">
-      <div id="board"></div>
-      <div id="mem-overlay" class="win" style="display:none">
-        <div style="text-align:center"><div id="mem-msg"></div></div>
-      </div>
-    </section>
-
-    <!-- Fruit Slice -->
-    <section id="game-slice" class="game hidden" aria-label="Fruit Slice">
-      <div id="wrap-slice"><canvas id="c-slice"></canvas></div>
-      <div id="overlay-slice"></div>
-    </section>
-  </main>
-
-  <!-- LOGIN -->
-  <div id="login" class="modal" role="dialog" aria-modal="true">
-    <div class="card">
+  <div class="wrap">
+    <header>
       <div class="brand">
-        <img id="logoFS" src="Artboard 1.png" alt="Alternar tela cheia" />
-        <div class="muted small">Toque na logo para entrar/sair do fullscreen</div>
+        <button id="btn-full" class="chip" title="Fullscreen">⛶</button>
+        <h1>Totem — 3 em 1</h1>
       </div>
-      <h2>Entrar</h2>
-      <label class="field">
-        <span>Nome</span>
-        <input id="nome" autocomplete="name" placeholder="Seu nome" maxlength="64" />
-      </label>
-      <label class="field">
-        <span>Empresa</span>
-        <input id="empresa" autocomplete="organization" placeholder="Sua empresa" maxlength="64" />
-      </label>
-      <div class="foot">
-        <button id="loginBtn" class="btn">Entrar</button>
-        <span id="login-error" class="error">Informe nome e empresa.</span>
+      <nav id="games-nav">
+        <button class="tab on" data-game="memory">Memória 3×4</button>
+        <button class="tab" data-game="tap">Tap Reflex</button>
+        <button class="tab" data-game="slice">Fruit Slice</button>
+      </nav>
+      <div id="hud">
+        <span class="tag">⏱ <b id="time">30</b>s</span>
+        <span class="tag">⭐ <b id="score">0</b></span>
+        <span class="tag">🏆 <b id="hi">0</b></span>
+        <button id="btn-start" class="btn">Começar</button>
       </div>
-    </div>
-  </div>
+    </header>
 
-  <!-- RANKING -->
-  <div id="rank" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="card">
-      <h2 id="rank-title">Ranking</h2>
-      <ol id="rankList" class="rank"></ol>
-      <div class="actions"><button id="back" class="tab">Voltar</button></div>
-    </div>
+    <main id="stage">
+      <!-- ===== Memória 3×4 ===== -->
+      <section id="game-memory" class="game on">
+        <div id="board"></div>
+        <div id="mem-overlay" class="win" style="display:none;">
+          <div class="card-msg">
+            <div id="mem-msg">Fim!</div>
+            <div class="row">
+              <button id="btn-restart" class="btn">Reiniciar</button>
+              <button id="btn-close" class="btn ghost">Fechar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Tap Reflex ===== -->
+      <section id="game-tap" class="game">
+        <div id="tap-grid"></div>
+        <div id="tap-overlay" class="win" style="display:none;">
+          <div class="card-msg">
+            <div id="tap-msg">Fim!</div>
+            <div class="row">
+              <button id="tap-restart" class="btn">Reiniciar</button>
+              <button id="tap-close" class="btn ghost">Fechar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Fruit Slice ===== -->
+      <section id="game-slice" class="game">
+        <canvas id="slice-cv"></canvas>
+        <div id="slice-overlay" class="win" style="display:none;">
+          <div class="card-msg">
+            <div id="slice-msg">Fim!</div>
+            <div class="row">
+              <button id="slice-restart" class="btn">Reiniciar</button>
+              <button id="slice-close" class="btn ghost">Fechar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
   <script src="script.js"></script>
