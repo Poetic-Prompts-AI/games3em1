@@ -2,6 +2,7 @@
   --bg:#0d0f14; --panel:#141823; --ink:#e6e9ef; --muted:#9aa4b2;
   --brand:#1f6feb; --chip:#1b2233; --menu:url('fundo_game2.png');
   --topbar:64px; --gap:24px; --pad:24px; /* usados no Memória */
+  --card: 100px; /* será sobrescrito via JS (ajuste dinâmico) */
 }
 
 *{box-sizing:border-box;margin:0}
@@ -37,33 +38,25 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .pulse{animation:pulse 1.2s infinite}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
 
-/* Memória 3×4 — SEM sobreposição, perfeito p/ 1080×1920 */
+/* Memória 3×4 — sem sobreposição; tamanho via --card */
 #board{
-  /* área útil para o grid */
-  --gridW: calc(100vw - 2*var(--pad));
-  --gridH: calc(100vh - var(--topbar) - 2*var(--pad));
-  /* cálculos de tamanho da carta */
-  --cardByW: calc( (var(--gridW) - 2*var(--gap)) / 3 );
-  --cardByH: calc( ( (var(--gridH) - 3*var(--gap)) / 4 ) * 0.75 ); /* 3:4 */
-  --card: min(var(--cardByW), var(--cardByH));
-
   display:grid;
   grid-template-columns: repeat(3, var(--card));
   gap: var(--gap);
   padding: var(--pad);
   height: 100%;
-  justify-content:center;
-  align-content:center; /* não esticar vertical */
-  overflow:hidden; /* garante que nada transborde */
+  justify-content: center;
+  align-content: center; /* não esticar vertical */
+  overflow:hidden;
 }
 .card{
-  width:var(--card);
-  aspect-ratio:3/4;
-  position:relative;
-  border-radius:18px;
-  perspective:1000px;
-  cursor:pointer;
-  box-shadow:0 6px 18px #0006;
+  width: var(--card);
+  aspect-ratio: 3 / 4;
+  position: relative;
+  border-radius: 18px;
+  perspective: 1000px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px #0006;
 }
 .inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .35s}
 .card.flipped .inner{transform:rotateY(180deg)}
@@ -94,7 +87,9 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .rank{margin:12px 0 8px 22px;line-height:1.8}
 .actions{display:flex;justify-content:flex-end;gap:8px}
 
-/* ajuste fino opcional para telas muito estreitas */
+/* ajuste fino opcional para telas estreitas */
 @media (max-width: 420px){ :root{ --gap:16px; --pad:16px; } }
+
+
 
 
