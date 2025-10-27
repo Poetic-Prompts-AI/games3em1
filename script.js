@@ -14,32 +14,21 @@ const startBtn=$('#start'), scoreEl=$('#score'), timeEl=$('#time'), hiEl=$('#hi'
 const SK_PLAYER='tapreflex_player';
 const leaderKey=mode=> mode==='reflex'?'leader_reflex' : mode==='memory'?'leader_memory' : 'leader_slice';
 
-// ===== ÁUDIO GLOBAL (sons p/ Reflex e Memória)
+// ===== ÁUDIO GLOBAL (Reflex + Memória)
 const Sound = (()=> {
   let actx=null, master=null;
-  function ensure(){
-    if(actx) return;
-    actx = new (window.AudioContext||window.webkitAudioContext)();
-    master = actx.createGain(); master.gain.value = 0.35; master.connect(actx.destination);
-  }
+  function ensure(){ if(actx) return; actx=new (window.AudioContext||window.webkitAudioContext)(); master=actx.createGain(); master.gain.value=0.35; master.connect(actx.destination); }
   async function resume(){ try{ ensure(); await actx.resume(); }catch{} }
   function blip(freq=600, dur=0.08, vol=0.9, type='sine'){
-    if(!actx) return;
-    const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
-    o.type=type; o.frequency.value=freq;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(vol, t+0.004);
-    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-    o.connect(g); g.connect(master);
-    o.start(t); o.stop(t+dur+0.02);
+    if(!actx) return; const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol,t+0.004); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.02);
   }
   function sweepDown(f0=500,f1=180,dur=0.22,vol=0.9,type='sine'){
-    if(!actx) return;
-    const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
-    o.type=type; o.frequency.setValueAtTime(f0,t);
-    o.frequency.exponentialRampToValueAtTime(Math.max(1,f1), t+dur);
-    g.gain.setValueAtTime(vol, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    if(!actx) return; const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+    o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(Math.max(1,f1), t+dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
     o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.02);
   }
   const play = {
@@ -75,8 +64,7 @@ function showRank(mode,score){
     mode==='reflex' ? 'Ranking — Tap Reflex' :
     mode==='memory' ? 'Ranking — Memória 3×4' : 'Ranking — Fruit Slice';
   const top=pushLeaderboard(mode,{nome:S.player.nome,empresa:S.player.empresa,score,t:Date.now()});
-  rankList.innerHTML='';
-  top.forEach((r,i)=>{ const li=document.createElement('li'); li.textContent=`${i+1}. ${r.nome} · ${r.empresa} — ${r.score}`; rankList.appendChild(li); });
+  rankList.innerHTML=''; top.forEach((r,i)=>{ const li=document.createElement('li'); li.textContent=`${i+1}. ${r.nome} · ${r.empresa} — ${r.score}`; rankList.appendChild(li); });
   requestAnimationFrame(()=> rank.classList.remove('hidden'));
 }
 backBtn.addEventListener('click', ()=>{
@@ -91,7 +79,6 @@ function setMode(mode){
   S.mode=mode;
   ['#game-reflex','#game-memory','#game-slice'].forEach(sel=>$(sel).classList.add('hidden'));
   selector.style.display='none'; msg.style.display='none';
-
   scoreEl.textContent='0'; timeEl.textContent='30'; hiEl.textContent='0';
   startBtn.textContent='Iniciar'; startBtn.disabled=(mode==='none');
 
@@ -100,14 +87,13 @@ function setMode(mode){
     Reflex.loadHi(); Reflex.resetHUD();
   }else if(mode==='memory'){
     $('#game-memory').classList.remove('hidden'); title.textContent='Memória 3×4';
-    Memory.loadHi(); Memory.setup();
+    Memory.loadHi(); Memory.setup(); Memory.adjustSize(); // <- garante ajuste inicial
   }else if(mode==='slice'){
     $('#game-slice').classList.remove('hidden'); title.textContent='Fruit Slice';
     Slice.loadHi(); Slice.prepare();
   }else{
     title.textContent='Arcade — Escolha um jogo';
-    selector.style.display='block';
-    startBtn.disabled=true;
+    selector.style.display='block'; startBtn.disabled=true;
   }
 }
 
@@ -151,10 +137,8 @@ const Reflex = {
   loadHi(){ this.hi = Number(localStorage.getItem(this.sk('hi'))||0); hiEl.textContent=this.hi; },
   saveHi(){ if(this.score>this.hi){ this.hi=this.score; localStorage.setItem(this.sk('hi'),this.hi); hiEl.textContent=this.hi; } },
 
-  killTimers(){ clearTimeout(this.spawnTO); clearTimeout(this.missTO); clearTimeout(this.timerTO);
-               this.spawnTO=this.missTO=this.timerTO=null; },
-  hardStop(){ this.playing=false; this.killTimers(); this.target.style.display='none';
-              startBtn.textContent='Iniciar'; startBtn.disabled=true; },
+  killTimers(){ clearTimeout(this.spawnTO); clearTimeout(this.missTO); clearTimeout(this.timerTO); this.spawnTO=this.missTO=this.timerTO=null; },
+  hardStop(){ this.playing=false; this.killTimers(); this.target.style.display='none'; startBtn.textContent='Iniciar'; startBtn.disabled=true; },
 
   resetHUD(){
     this.score=0; this.time=this.roundTime; this.level=1; this.playing=false;
@@ -167,16 +151,13 @@ const Reflex = {
 
   paintKind(){
     if(this.kind==='gold'){
-      this.target.textContent='★';
-      this.target.style.borderColor='#ffd54a';
+      this.target.textContent='★'; this.target.style.borderColor='#ffd54a';
       this.target.style.boxShadow='0 12px 30px #000a, 0 0 40px 12px #ffd84a66';
     }else if(this.kind==='decoy'){
-      this.target.textContent='NO!';
-      this.target.style.borderColor='#ef4444';
+      this.target.textContent='NO!'; this.target.style.borderColor='#ef4444';
       this.target.style.boxShadow='0 12px 30px #000a, 0 0 36px 10px #ef444466';
     }else{
-      this.target.textContent='GO!';
-      this.target.style.borderColor='#fff8';
+      this.target.textContent='GO!'; this.target.style.borderColor='#fff8';
       this.target.style.boxShadow='0 12px 30px #000a, 0 0 36px 10px #ffd84a55';
     }
   },
@@ -197,7 +178,7 @@ const Reflex = {
 
     const maxWait = Math.max(520, 1350 - this.level*75);
     clearTimeout(this.missTO);
-    this.missTO = setTimeout(()=>{ if(this.playing) this.miss('timeout'); }, maxWait);
+    this.missTO = setTimeout(()=>{ if(this.playing) this.miss(); }, maxWait);
   },
 
   basePoints(rt){
@@ -218,9 +199,7 @@ const Reflex = {
     stg.style.background=color; setTimeout(()=>{ stg.style.background=old||'#0d0f14'; }, 120);
   },
 
-  next(){ if(!this.playing) return;
-          clearTimeout(this.spawnTO);
-          this.spawnTO = setTimeout(()=>{ if(this.playing) this.spawn(); }, this.rand(280, 820)); },
+  next(){ if(!this.playing) return; clearTimeout(this.spawnTO); this.spawnTO = setTimeout(()=>{ if(this.playing) this.spawn(); }, this.rand(280, 820)); },
 
   hit(){
     if(!this.playing) return;
@@ -232,8 +211,7 @@ const Reflex = {
       this.score = Math.max(0, this.score - 25);
       scoreEl.textContent = this.score;
       this.flash('#3b0d0d'); Sound.play.reflexMiss();
-      this.target.style.display='none';
-      this.next(); return;
+      this.target.style.display='none'; this.next(); return;
     }
 
     let gained = this.kind==='gold' ? 60 : this.basePoints(rt);
@@ -259,7 +237,7 @@ const Reflex = {
   tick(){
     if(!this.playing) return;
     this.time--; timeEl.textContent=this.time;
-    if(this.time<=0){ this.gameOver(); return; }
+    if(this.time<=0){ this.stopAndRank(); return; }
     this.timerTO=setTimeout(()=>this.tick(),1000);
   },
 
@@ -267,10 +245,8 @@ const Reflex = {
     let n=3;
     msg.innerHTML = `<h2>Tap Reflex</h2><p class="muted">Prepare-se…</p><div class="tag" id="count">${n}</div>`;
     msg.style.display='block';
-    const go=()=>{ 
-      if(n<=1){ msg.style.display='none'; Sound.play.countFinal(); cb(); return; }
-      n--; document.querySelector('#count').textContent=n; Sound.play.countBeep(); setTimeout(go,1000);
-    };
+    const go=()=>{ if(n<=1){ msg.style.display='none'; Sound.play.countFinal(); cb(); return; }
+      n--; document.querySelector('#count').textContent=n; Sound.play.countBeep(); setTimeout(go,1000); };
     setTimeout(go,1000);
   },
 
@@ -279,9 +255,7 @@ const Reflex = {
     this.resetHUD(); startBtn.disabled=true;
     this.preCount(()=>{
       this.playing=true; startBtn.textContent='Jogando...';
-      Sound.play.startChirp();
-      this.timerTO=setTimeout(()=>this.tick(),1000);
-      this.spawn();
+      Sound.play.startChirp(); this.timerTO=setTimeout(()=>this.tick(),1000); this.spawn();
     });
   },
 
@@ -290,9 +264,7 @@ const Reflex = {
     this.saveHi(); startBtn.textContent='Iniciar';
     (this.score>0? Sound.play.reflexEndWin() : Sound.play.reflexEndLose());
     requestAnimationFrame(()=>showRank('reflex', this.score));
-  },
-
-  gameOver(){ this.stopAndRank(); }
+  }
 };
 Reflex.target.addEventListener('click', ()=> Reflex.hit(), {passive:true});
 $('#game-reflex').addEventListener('click', e=>{ if(e.target.id==='game-reflex' && Reflex.playing) Reflex.miss(); }, {passive:true});
@@ -307,6 +279,7 @@ const Memory=(()=>{
   function sk(k){return `memory_${k}_${S.player.nome}__${S.player.empresa}`;}
   function loadHi(){ const hi=Number(localStorage.getItem(sk('hi'))||0)||0; hiEl.textContent=hi; }
   function saveHi(){ const hi=Number(localStorage.getItem(sk('hi')))||0; if(score>hi){ localStorage.setItem(sk('hi'),score); hiEl.textContent=score; } }
+
   function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;}
   function makeCard(s,i){
     const el=document.createElement('div'); el.className='card'; el.dataset.symbol=s;
@@ -314,12 +287,26 @@ const Memory=(()=>{
       <div class="face back" style="background: radial-gradient(circle at 30% 30%, hsl(${(i*57)%360} 90% 60%), #0e1016)">${s}</div></div>`;
     el.addEventListener('click',()=>flip(el),{passive:true}); return el;
   }
+
   function setup(){
     if(S.mode!=='memory') return;
     board.innerHTML=''; overlay.style.display='none'; first=null; lock=false; matched=0;
     shuffle([...icons,...icons]).map((s,i)=>makeCard(s,i)).forEach(c=>board.appendChild(c));
     score=0; time=30; scoreEl.textContent=0; timeEl.textContent=time;
   }
+
+  // Ajuste de tamanho robusto (evita sobreposição)
+  function adjustSize(){
+    const stage = $('#stage');
+    const pad = 24, gap = 24;
+    const w = stage.clientWidth - pad*2;
+    const h = stage.clientHeight - pad*2;
+    const cardByW = (w - 2*gap) / 3;
+    const cardByH = ((h - 3*gap) / 4) * 0.75; // 3:4
+    const card = Math.max(60, Math.floor(Math.min(cardByW, cardByH))); // limite mínimo
+    document.documentElement.style.setProperty('--card', card + 'px');
+  }
+
   function flip(c){
     if(!playing||lock||c.classList.contains('flipped')||c.dataset.done) return;
     c.classList.add('flipped'); Sound.play.memFlip();
@@ -333,15 +320,18 @@ const Memory=(()=>{
       setTimeout(()=>{ first.classList.remove('flipped'); c.classList.remove('flipped'); first=null; lock=false; },650);
     }
   }
+
   function tick(){ if(!playing) return; time--; timeEl.textContent=time; if(time<=0){ gameOver(false); return; } timerTO=setTimeout(tick,1000); }
+
   function start(){
     if(!S.player.nome){ msg.innerHTML='<h2>Faça login primeiro</h2>'; msg.style.display='block'; return; }
-    setup(); startBtn.disabled=true;
+    setup(); adjustSize(); startBtn.disabled=true;
     let n=3; msg.innerHTML=`<h2>Memória 3×4</h2><div class="tag" id="count">${n}</div>`; msg.style.display='block';
     const go=()=>{ if(n<=1){ msg.style.display='none'; playing=true; startBtn.textContent='Jogando...'; Sound.play.startChirp(); timerTO=setTimeout(tick,1000); return; }
       n--; $('#count').textContent=n; Sound.play.countBeep(); setTimeout(go,1000); };
     setTimeout(go,1000);
   }
+
   function gameOver(completou){
     playing=false; clearTimeout(timerTO);
     memMsg.innerHTML = completou ? `<h2>Parabéns!</h2><p>Sua pontuação: <b>${score}</b>.</p>`
@@ -350,12 +340,15 @@ const Memory=(()=>{
     (score>0 ? Sound.play.memEndWin() : Sound.play.memEndLose());
     requestAnimationFrame(()=>showRank('memory', score));
   }
+
   function hardStop(){ playing=false; clearTimeout(timerTO); overlay.style.display='none'; }
 
-  return { setup, start, loadHi, hardStop };
+  // expõe funções
+  return { setup, start, loadHi, hardStop, adjustSize };
 })();
+window.addEventListener('resize', ()=>{ if(S.mode==='memory') Memory.adjustSize(); });
 
-/* ====================== FRUIT SLICE (com explosão) ====================== */
+/* ====================== FRUIT SLICE (com explosão + sons próprios) ====================== */
 const Slice = (()=>{
   const GAME_SCALE=1.5, MAX_FRUITS=6, MAX_PART=60, STEP=1000/60;
   const ROUND_TIME=30, SPAWN_MS=520, BOMB_RATE=0.18;
@@ -366,26 +359,17 @@ const Slice = (()=>{
   window.addEventListener('resize', resize);
   const overlay=$('#overlay-slice');
 
-  // Áudio próprio (spawn, slice, bomba)
+  // áudio próprio
   let actx=null, master=null;
   function ensureAudio(){ if (actx) return; actx=new (window.AudioContext||window.webkitAudioContext)(); master=actx.createGain(); master.gain.value=0.35; master.connect(actx.destination); }
   async function safeResume(){ try{ ensureAudio(); await actx.resume(); }catch{} }
-  function blip(freq=600, dur=0.08, t0=actx.currentTime){ const o=actx.createOscillator(), g=actx.createGain();
-    o.frequency.value=freq; o.type='sine'; g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(0.9,t0+0.005); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
-    o.connect(g); g.connect(master); o.start(t0); o.stop(t0+dur+0.02); }
-  function noise(dur=0.06, t0=actx.currentTime, vol=0.7){
-    const buf=actx.createBuffer(1, Math.floor(actx.sampleRate*dur), actx.sampleRate);
-    const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
-    const src=actx.createBufferSource(); src.buffer=buf; const g=actx.createGain(); g.gain.value=vol; src.connect(g); g.connect(master); src.start(t0);
-  }
+  const blip=(f=600,d=0.08,t0=actx.currentTime)=>{ const o=actx.createOscillator(), g=actx.createGain(); o.frequency.value=f; o.type='sine'; g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(0.9,t0+0.005); g.gain.exponentialRampToValueAtTime(0.0001,t0+d); o.connect(g); g.connect(master); o.start(t0); o.stop(t0+d+0.02); };
+  function noise(d=0.06,t0=actx.currentTime,vol=0.7){ const b=actx.createBuffer(1,Math.floor(actx.sampleRate*d),actx.sampleRate), ch=b.getChannelData(0); for(let i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*(1-i/ch.length); const src=actx.createBufferSource(); src.buffer=b; const g=actx.createGain(); g.gain.value=vol; src.connect(g); g.connect(master); src.start(t0); }
   const playSlice=()=>{ if(!actx) return; const t=actx.currentTime; blip(700,0.07,t); noise(0.05,t,0.55); };
   const playSpawn=()=>{ if(!actx) return; blip(420,0.05); };
-  function playBomb(){ if(!actx) return; const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
-    o.type='sine'; o.frequency.setValueAtTime(220,t); o.frequency.exponentialRampToValueAtTime(80,t+0.25);
-    g.gain.setValueAtTime(0.001,t); g.gain.exponentialRampToValueAtTime(0.7,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t+0.35); noise(0.06,t,0.7); }
+  function playBomb(){ if(!actx) return; const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain(); o.type='sine'; o.frequency.setValueAtTime(220,t); o.frequency.exponentialRampToValueAtTime(80,t+0.25); g.gain.setValueAtTime(0.001,t); g.gain.exponentialRampToValueAtTime(0.7,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.3); o.connect(g); g.connect(master); o.start(t); o.stop(t+0.35); noise(0.06,t,0.7); }
 
-  // Texturas
+  // texturas
   const FRUITS_SRC=['fruit-apple.png','fruit-orange.png','fruit-kiwi.png','fruit-watermelon.png'];
   const BOMB_SRC='./bomb.png';
   const TEX={fruits:[], bomb:null};
@@ -394,12 +378,12 @@ const Slice = (()=>{
   (async ()=>{ for(const s of FRUITS_SRC){ const im=await loadImg(s); TEX.fruits.push(im? makeCircleSprite(im,192):null); } const b=await loadImg(BOMB_SRC); TEX.bomb=b? makeCircleSprite(b,192):null; })();
   const pickFruitSprite=()=>{ const arr=TEX.fruits.filter(Boolean); return arr.length? arr[(Math.random()*arr.length)|0]:null; };
 
-  // Pools
+  // pools
   const fruits=new Array(MAX_FRUITS).fill(0).map(()=>({alive:false,x:0,y:0,vx:0,vy:0,ay:0,r:0,bomb:false,color:'#22c55e',light:'#ffffff22',spr:null}));
   const parts =new Array(MAX_PART).fill(0).map(()=>({alive:false,x:0,y:0,vx:0,vy:0,ttl:0,h:120,s:3,smoke:false}));
   let pIdx=0;
 
-  // Rastro
+  // rastro
   const TRAIL_MAX=80, TRAIL_FADE=240;
   const trail=new Array(TRAIL_MAX).fill(0).map(()=>({x:0,y:0,t:0,alive:false}));
   let trailHead=0, trailCount=0;
@@ -409,16 +393,15 @@ const Slice = (()=>{
     for(let k=0;k<trailCount;k++){ const idx=(idxStart+k)%TRAIL_MAX, p=trail[idx]; if(!p.alive) continue; const age=now-p.t; if(age>TRAIL_FADE){ p.alive=false; continue; }
       if(prev){ const a=1-(age/TRAIL_FADE); ct.strokeStyle=`rgba(255,255,255,${a.toFixed(3)})`; ct.lineWidth=8+a*6; ct.lineCap='round'; ct.beginPath(); ct.moveTo(prev.x,prev.y); ct.lineTo(p.x,p.y); ct.stroke(); } prev=p; } }
 
-  // Efeitos de explosão
+  // efeitos bomba
   const waves=[]; let shakeMs=0;
   const addWave=(x,y)=>waves.push({x,y,r:14,a:0.55});
-  const screenFlash=()=>{ overlay.style.background='rgba(255,0,0,0.12)'; setTimeout(()=>overlay.style.background='transparent',120); };
 
-  // Util
+  // util
   const rand=(min,max)=>min+Math.random()*(max-min);
   function segCircle(ax,ay,bx,by,cx,cy,cr){ const abx=bx-ax, aby=by-ay, ab2=abx*abx+aby*aby||1; const t=((cx-ax)*abx+(cy-ay)*aby)/ab2, u=t<0?0:t>1?1:t; const px=ax+abx*u, py=ay+aby*u; const dx=px-cx, dy=py-cy; return dx*dx+dy*dy<=cr*cr; }
 
-  // Draw
+  // draw
   function drawFruit(o){
     ct.fillStyle=o.bomb?'rgba(239,68,68,.18)':'rgba(16,185,129,.18)';
     ct.beginPath(); ct.arc(o.x,o.y,o.r*1.08,0,Math.PI*2); ct.fill();
@@ -431,7 +414,7 @@ const Slice = (()=>{
     }else{ const a=Math.max(0,Math.min(1,p.ttl/420)); ct.fillStyle=`hsla(${p.h} 80% 60% / ${a})`; ct.beginPath(); ct.arc(p.x,p.y,p.s,0,Math.PI*2); ct.fill(); } }
   function drawWaves(){ for(let i=waves.length-1;i>=0;i--){ const w=waves[i]; if(w.a<=0){ waves.splice(i,1); continue; } ct.strokeStyle=`rgba(255,200,120,${w.a})`; ct.lineWidth=3; ct.beginPath(); ct.arc(w.x,w.y,w.r,0,Math.PI*2); ct.stroke(); } }
 
-  // Spawn
+  // spawn
   function spawnFruit(){
     let active=0; for(const f of fruits) if(f.alive) active++; if(active>=MAX_FRUITS) return;
     const W=cv.width/(DPR*GAME_SCALE), H=cv.height/(DPR*GAME_SCALE);
@@ -458,7 +441,7 @@ const Slice = (()=>{
     addWave(x,y); overlay.style.background='rgba(255,0,0,0.12)'; setTimeout(()=>overlay.style.background='transparent',120); shakeMs=220;
   }
 
-  // Estado
+  // estado
   let playing=false, score=0, timer=ROUND_TIME, speed=1;
   let rafId=0, lastSpawn=0, acc=0, lastTs=0;
   let pointerId=null, last=null, pmLast=null, lastProc=0;
@@ -524,24 +507,21 @@ const Slice = (()=>{
   return { prepare, start, loadHi, hardStop };
 })();
 
-/* ====================== START ====================== */
+/* ====================== START & INIT ====================== */
 startBtn.addEventListener('click', ()=>{
   if(S.mode==='reflex'){ Reflex.start(); }
   else if(S.mode==='memory'){ Memory.start(); }
   else if(S.mode==='slice'){ Slice.start(); }
 });
 
-/* ====================== INIT ====================== */
 (function init(){
   showLogin(); setMode('none');
+  // estética animada do alvo
   const tEl=$('#target');
-  function paint(){
-    const t=performance.now()/1000;
+  function paint(){ const t=performance.now()/1000;
     const g1=`radial-gradient(circle at 30% 30%, hsl(${(t*60)%360} 90% 60%) 0 40%, transparent 60%)`;
     const g2=`radial-gradient(circle, #ffffff22 0 60%, #00000022 62% 100%)`;
-    tEl.style.background=`${g1}, ${g2}`; requestAnimationFrame(paint);
-  }
+    tEl.style.background=`${g1}, ${g2}`; requestAnimationFrame(paint); }
   paint();
 })();
-
 
