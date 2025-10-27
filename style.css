@@ -1,7 +1,6 @@
 :root{
   --bg:#0d0f14; --panel:#141823; --ink:#e6e9ef; --muted:#9aa4b2;
-  --brand:#1f6feb; --chip:#1b2233;
-  --menu:url('fundo_game2.png');
+  --brand:#1f6feb; --chip:#1b2233; --menu:url('fundo_game2.png');
 }
 *{box-sizing:border-box;margin:0}
 html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,Arial}
@@ -35,7 +34,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .pulse{animation:pulse 1.2s infinite}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
 
-/* Memória 3×4 */
+/* Memória */
 #board{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:18px;height:100%}
 .card{position:relative;aspect-ratio:3/4;border-radius:16px;perspective:1000px;cursor:pointer}
 .inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .35s}
@@ -62,3 +61,4 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .error{color:#fca5a5;display:none}
 .rank{margin:12px 0 8px 22px;line-height:1.8}
 .actions{display:flex;justify-content:flex-end;gap:8px}
+
