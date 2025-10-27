@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-  <title>Arcade 3-em-1 — Tap Reflex + Memória + Fruit Slice</title>
+  <title>Arcade 3-em-1</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
@@ -26,20 +26,20 @@
       <div class="choices">
         <button class="choice" id="pick-reflex">
           <div class="choice-title">Tap Reflex</div>
-          <div class="choice-sub">Toque no alvo “GO!” o mais rápido possível</div>
+          <div class="choice-sub">Toque no alvo “GO!” rápido — com decoy e combo</div>
         </button>
         <button class="choice" id="pick-memory">
           <div class="choice-title">Memória 3×4</div>
-          <div class="choice-sub">Encontre os pares e faça pontos</div>
+          <div class="choice-sub">Encontre os pares em 30s</div>
         </button>
         <button class="choice" id="pick-slice">
           <div class="choice-title">Fruit Slice</div>
-          <div class="choice-sub">Corte as frutas, desvie das bombas</div>
+          <div class="choice-sub">Corte frutas, desvie das bombas</div>
         </button>
       </div>
     </section>
 
-    <!-- Mensagens (contagem etc.) -->
+    <!-- Mensagens -->
     <div id="msg" class="center" style="display:none"></div>
 
     <!-- Tap Reflex -->
@@ -47,13 +47,11 @@
       <div id="target" class="pulse">GO!</div>
     </section>
 
-    <!-- Memória 3×4 -->
+    <!-- Memória -->
     <section id="game-memory" class="game hidden">
       <div id="board"></div>
       <div id="mem-overlay" class="win" style="display:none">
-        <div style="text-align:center">
-          <div id="mem-msg"></div>
-        </div>
+        <div style="text-align:center"><div id="mem-msg"></div></div>
       </div>
     </section>
 
@@ -87,17 +85,16 @@
     </div>
   </div>
 
-  <!-- RANKING (só “Voltar”) -->
+  <!-- RANKING -->
   <div id="rank" class="modal hidden" role="dialog" aria-modal="true">
     <div class="card">
       <h2 id="rank-title">Ranking</h2>
       <ol id="rankList" class="rank"></ol>
-      <div class="actions">
-        <button id="back" class="tab">Voltar</button>
-      </div>
+      <div class="actions"><button id="back" class="tab">Voltar</button></div>
     </div>
   </div>
 
   <script src="script.js"></script>
 </body>
 </html>
+
