@@ -35,14 +35,31 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
 
 /* Memória */
-#board{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:18px;height:100%}
-.card{position:relative;aspect-ratio:3/4;border-radius:16px;perspective:1000px;cursor:pointer}
-.inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .35s}
-.card.flipped .inner{transform:rotateY(180deg)}
-.face{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;display:grid;place-items:center;font-weight:900;font-size:42px}
-.front{background:#111827;outline:2px solid #364152}
-.back{transform:rotateY(180deg)}
-.win{position:absolute;inset:0;display:grid;place-items:center;background:#000000aa;backdrop-filter:blur(2px);font-size:28px}
+/* Memória (NOVO – cartas menores e estáveis) */
+:root{
+  /* tamanho de carta responsivo: mínimo 80px, preferido ~22vw, máximo 120px */
+  --card: clamp(80px, 22vw, 120px);
+}
+
+#board{
+  display:grid;
+  grid-template-columns: repeat(3, var(--card));
+  gap:12px;
+  padding:16px;
+  height:100%;
+  justify-content:center;   /* centraliza na horizontal */
+  align-content:center;     /* centraliza na vertical, sem esticar */
+}
+
+.card{
+  width:var(--card);
+  aspect-ratio:3/4;
+  position:relative;
+  border-radius:16px;
+  perspective:1000px;
+  cursor:pointer;
+}
+
 
 /* Fruit Slice */
 #wrap-slice{position:absolute;inset:0}
@@ -61,4 +78,5 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .error{color:#fca5a5;display:none}
 .rank{margin:12px 0 8px 22px;line-height:1.8}
 .actions{display:flex;justify-content:flex-end;gap:8px}
+
 
